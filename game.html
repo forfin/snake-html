@@ -8,12 +8,21 @@
     padding: 0;
     margin: 0;
     font-family: sans-serif;
+    background: #40596B;
+    text-align: center;
   }
   #mySnakeGame{
-    background: #FAFAFA;
+    background: #FFFFFF;
   }
   .game{
     display: inline-block;
+    padding: 2em;
+    border-top: 1em solid #FF7058;
+    background: #F2F2F2;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
   .menu ul{
     padding: 0;
@@ -26,18 +35,41 @@
   .menu ul .score{
     float: right;;
   }
+  .startOver{
+    display: inline-block;
+    padding: .5em;
+    margin: .2em;
+    background-color: #84DBFF;
+    color: #FFFFFF;
+    text-decoration: none;
+    letter-spacing: .1em;
+  }
+  .startOver:hover,
+  .startOver:active{
+    background-color: #FF7058;
+  }
+  #score_val{
+    display: inline-block;
+    padding: .5em;
+    margin: .2em;
+    background-color: #FFD15C;
+    width: 4em;
+    text-align: right;
+  }
 </style>
 </head>
 <body onload="startGame()">
+
   <div class="game">
     <canvas id="mySnakeGame"></canvas>
     <div class="menu">
       <ul>
-        <li><a onclick="startOver();return false;" href="#">Start Over</a></li>
-        <li class="score">Score <span id="score_val">0</span></li>
+        <li><a class="startOver" onclick="startOver();return false;" href="#">Start Over</a></li>
+        <li class="score"><span id="score_val">0</span></li>
       </ul>
     </div>
   </div>
+
 
 </body>
 </html>

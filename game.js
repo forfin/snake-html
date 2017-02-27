@@ -1,12 +1,12 @@
 
-var snack;
+var snake;
 
 var freeLoaction = [];
 
 var map;
-var mapColumns = 32;
-var mapRows = 32;
-var mapWidth = 480;
+var mapColumns = 64;
+var mapRows = 48;
+var mapWidth = 640;
 var mapHeight = 480;
 
 var cellHeight = mapHeight / mapRows;
@@ -24,6 +24,16 @@ var maxRefreshCount;
 
 var userLastAction;
 var snakeLastMove;
+
+var borderLocation = [];
+for(c=0;c<mapRows;c++){
+  borderLocation.push([c, -1]);
+  borderLocation.push([c, mapColumns]);
+}
+for(c=0;c<mapColumns;c++){
+  borderLocation.push([-1, c]);
+  borderLocation.push([mapRows, c]);
+}
 
 var pixelStep;
 
@@ -45,17 +55,20 @@ function startOver(){
   score = 0;
   document.getElementById('score_val').innerHTML = score;
 
-  snack = [];
-  snack[0] = [2, 5];
-  snack[1] = [2, 6];
-  snack[2] = [2, 7];
+  snake = [];
 
-  food = [10, 10];
+  var freeLoaction = calcFreeLocation();
+  food = freeLoaction[Math.floor(Math.random()*freeLoaction.length)]; //set new food
+  freeLoaction = calcFreeLocation();
+  snake.push(freeLoaction[Math.floor(Math.random()*freeLoaction.length)]);
 
-  userLastAction = 'R';
-  snakeLastMove = 'R';
+  var actionList = ['R', 'L', 'U', 'D'];
+  var action = actionList[Math.floor(Math.random()*actionList.length)];
 
-  gameSpeed = 200;
+  userLastAction = action;
+  snakeLastMove = action;
+
+  gameSpeed = 80;
   drawSpeed = 20;
 
   pixelStep = 0;
@@ -68,9 +81,9 @@ function updateGame(){
 
 function drawGame(){
   clear(ctx);
-  drawSnake();
+  drawMap();
   drawFood();
-  //drawMap();
+  drawSnake();
 }
 
 function canvasMove(e) {
@@ -81,25 +94,28 @@ function canvasMove(e) {
 }
 
 function drawMap(){
+  ctx.strokeStyle="#F2F2F2";
   for(c = 0; c < mapColumns; c++){
     ctx.beginPath();
-    ctx.moveTo(c * cellWidth, 0);
-    ctx.lineTo(c * cellWidth, mapWidth);
+    ctx.moveTo(c * cellWidth + 0.5, .5);
+    ctx.lineTo(c * cellWidth + 0.5, mapHeight + 0.5);
     ctx.stroke();
   }
-
-  var cellHeight = mapHeight / mapRows;
   for(c = 0; c < mapRows; c++){
     ctx.beginPath();
-    ctx.moveTo(0, c * cellHeight);
-    ctx.lineTo(mapHeight, c * cellHeight);
+    ctx.moveTo(.5, c * cellHeight + 0.5);
+    ctx.lineTo(mapWidth + 0.5, c * cellWidth + 0.5);
     ctx.stroke();
   }
 }
 
 function calc(){
-  var headSnake = snack[snack.length-1];
-  var neckSnake = snack[snack.length-2];
+  if(snake.length == 1){
+    var neckSnake = [];
+  }else{
+    var neckSnake = snake[snake.length-2];
+  }
+  var headSnake = snake[snake.length-1];
   var nextHead;
 
   pixelStep = 0; //reset pixel step
@@ -120,19 +136,27 @@ function calc(){
   //console.log('headSnake', headSnake);
   //Revert direction is impossible.
   if(nextHead[0] == neckSnake[0] && nextHead[1] == neckSnake[1]){
+    //console.log('nextHead', nextHead);
     userLastAction = snakeLastMove;
     return calc();
   }else{
-    snack.push(nextHead);
-    //if eating food.
-    if(nextHead[0] == food[0] && nextHead[1] == food[1]){
-      freeLoaction = calcFreeLocation();
-      food = freeLoaction[Math.floor(Math.random()*freeLoaction.length)]; //set new food
-      score += 1;
-      document.getElementById('score_val').innerHTML = score;
+    //console.log(borderLocation);
+    var deathLocation = snake.concat(borderLocation);
+    if(isCoordnInArray(deathLocation, nextHead)){
+      console.log('Game Over');
     }else{
-      snack.shift(); // first elem of arrays will be removed. * tail
+      snake.push(nextHead);
+      //if eating food.
+      if(nextHead[0] == food[0] && nextHead[1] == food[1]){
+        freeLoaction = calcFreeLocation();
+        food = freeLoaction[Math.floor(Math.random()*freeLoaction.length)]; //set new food
+        score += 1;
+        document.getElementById('score_val').innerHTML = score;
+      }else{
+        snake.shift(); // first elem of arrays will be removed. * tail
+      }
     }
+
 
     snakeLastMove = userLastAction;
   }
@@ -143,7 +167,7 @@ function calcFreeLocation(){
   for(c=0;c<mapColumns;c++){
     for(r=0;r<mapRows;r++){
       var newLocation = [r, c];
-      if(!isCoordnInArray(newLocation, newLocation)){
+      if(!isCoordnInArray(snake, newLocation)){
         newFreeLoaction.push(newLocation);
       }
     }
@@ -153,13 +177,13 @@ function calcFreeLocation(){
 
 function drawSnake(){
   //var calcPixelStep = (cellHeight/10) * pixelStep;
-  ctx.fillStyle = 'rgba(0, 0, 0, .50)';
-  for(s = 0; s<snack.length;s++){
-    var drawLocation = [snack[s][1] * cellWidth, snack[s][0] * cellHeight];
+  ctx.fillStyle = '#40596B';
+  for(s = 0; s<snake.length;s++){
+    var drawLocation = [snake[s][1] * cellWidth, snake[s][0] * cellHeight];
     ctx.fillRect(drawLocation[0], drawLocation[1], cellWidth, cellHeight);
 
-    if(s == snack.length-1){
-      ctx.fillStyle = 'rgba(0, 0, 0, .6)';
+    if(s == snake.length-1){
+      ctx.fillStyle = '#FF7058';
       if(snakeLastMove == 'R'){
         drawLocation[0] += (cellWidth/maxRefreshCount) * pixelStep;
       }
@@ -179,7 +203,7 @@ function drawSnake(){
 }
 
 function drawFood(){
-  ctx.fillStyle = 'rgba(255, 200, 0, .8)';
+  ctx.fillStyle = '#FFD15C';
   ctx.fillRect(food[1] * cellWidth, food[0] * cellHeight, cellWidth, cellHeight);
 }
 
