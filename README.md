@@ -3,4 +3,4 @@
 # How to play
 - Open game.html with any modern browser.
 - Use arrow key to give snake a direction.
-- You cannot dies but can struck.
+- You cannot die but stuck.
