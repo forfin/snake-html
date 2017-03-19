@@ -2,6 +2,8 @@ function SnakeGame(){
 
   var snake;
 
+  var state;
+
   var map;
   var mapColumns;
   var mapRows;
@@ -16,6 +18,7 @@ function SnakeGame(){
   var ctx;
 
   var food;
+  var foodValue;
 
   var gameSpeed;
   var drawSpeed;
@@ -63,7 +66,30 @@ function SnakeGame(){
     setInterval(updateGame, gameSpeed);
     //setInterval(drawGame, drawSpeed);
 
+    //Keyboard Input
     document.onkeydown = canvasMove;
+
+    //Touch screen input
+    var hammertime = new Hammer(myScreen);
+    hammertime.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+    hammertime.on('swipe', function(ev) {
+      console.log(ev.direction);
+      switch(ev.direction) {
+        case Hammer.DIRECTION_LEFT:
+          userLastAction = 'L';
+          break;
+        case Hammer.DIRECTION_RIGHT:
+          userLastAction = 'R';
+          break;
+        case Hammer.DIRECTION_UP:
+          userLastAction = 'U';
+          break;
+        case Hammer.DIRECTION_DOWN:
+          userLastAction = 'D';
+          break;
+      }
+    });
+
   }
 
   this.startOver = function(){
@@ -74,18 +100,17 @@ function SnakeGame(){
 
     var freeLoaction = calcFreeLocation();
     food = freeLoaction[Math.floor(Math.random()*freeLoaction.length)]; //set new food
+    foodValue = 0;
     freeLoaction = calcFreeLocation();
     snake.push(freeLoaction[Math.floor(Math.random()*freeLoaction.length)]);
 
-    var actionList = ['R', 'L', 'U', 'D'];
-    var action = actionList[Math.floor(Math.random()*actionList.length)];
-
-    userLastAction = action;
-    snakeLastMove = action;
+    userLastAction = 'startgame';
 
     gameSpeed = 120;
 
     pixelStep = 0;
+
+    state = 'runing';
   }
 
   this.getSnake = function(){
@@ -115,6 +140,27 @@ function SnakeGame(){
     drawMap();
     drawFood();
     drawSnake();
+    if(userLastAction == 'startgame'){
+      drawStartGame();
+    }else if(state == 'gameover'){
+      drawGameOver();
+    }
+  }
+
+  function drawGameOver(){
+    ctx.fillStyle = "#FF7058";
+    var fontsize = window.innerWidth/10;
+    ctx.font = fontsize+"px Arial";
+    ctx.textAlign="center";
+    ctx.fillText("Game Over", mapWidth/2, mapHeight/2 + fontsize/2);
+  }
+
+  function drawStartGame(){
+    ctx.strokeStyle = "#888";
+    var fontsize = window.innerWidth/10;
+    ctx.font = fontsize+"px Arial";
+    ctx.textAlign="center";
+    ctx.strokeText("Swipe to Start", mapWidth/2, mapHeight/2 + fontsize/2);
   }
 
   function canvasMove(e) {
@@ -141,6 +187,9 @@ function SnakeGame(){
   }
 
   function calc(){
+    if(state != "runing"){
+      return;
+    }
     if(snake.length == 1){
       var neckSnake = [];
     }else{
@@ -162,6 +211,8 @@ function SnakeGame(){
     }
     else if(userLastAction == 'D'){
       nextHead = [headSnake[0] + 1, headSnake[1]];
+    }else{ //userLastAction == "startgame"
+      return;
     }
 
     //console.log('headSnake', headSnake);
@@ -174,6 +225,7 @@ function SnakeGame(){
       //console.log(borderLocation);
       var deathLocation = snake.concat(borderLocation);
       if(isCoordnInArray(deathLocation, nextHead)){
+        state = 'gameover';
         //console.log('Game Over');
       }else{
         snake.push(nextHead);
@@ -181,10 +233,13 @@ function SnakeGame(){
         if(nextHead[0] == food[0] && nextHead[1] == food[1]){
           freeLoaction = calcFreeLocation();
           food = freeLoaction[Math.floor(Math.random()*freeLoaction.length)]; //set new food
-          score += 1;
+          foodValue += 3;
+          score += 3;
           document.getElementById('score_val').innerHTML = score;
-        }else{
+        }else if(foodValue == 0){
           snake.shift(); // first elem of arrays will be removed. * tail
+        }else{
+          foodValue = foodValue-1;
         }
       }
 
@@ -260,3 +315,5 @@ function isCoordnInArray(array, coordn) {
 var game = new SnakeGame();
 
 window.addEventListener("resize", game.resize);
+
+game.startGame();
